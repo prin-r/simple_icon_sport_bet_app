@@ -22,7 +22,7 @@ tbears deploy sport_bet_app -k my_key.key -c sport_bet_app/deploy_testnet.json -
 
 ## Example deployed contracts on the testnet
 
-#### ReceiverMock contract
+#### SportBetApp contract
 
 [`cxa8a5044feac20d294093dbe9fed0f290e07f5604`](https://bicon.tracker.solidwallet.io/contract/cxa8a5044feac20d294093dbe9fed0f290e07f5604#readcontract)
 
