@@ -115,3 +115,12 @@ Obtaining proof can be done by following the steps below.
 
 1. Go to devnet's scan at [oracle-script-85](https://guanyu-devnet.cosmoscan.io/oracle-script/85).
    ![img](https://user-images.githubusercontent.com/12705423/93473449-3ca5f400-f920-11ea-94f9-99bb87c3efe1.png)
+
+2. Click `connect` button at the top right of the page then the connection modal will appear. After that enter the mnemonic `dev` just for the testing purpose and then click `connect` button in the modal.
+   ![img](https://user-images.githubusercontent.com/12705423/93473852-bb9b2c80-f920-11ea-8a79-6ce712f2a8b0.png)
+
+   The test account will contain some balance for testing.
+   ![img](https://user-images.githubusercontent.com/12705423/93474236-467c2700-f921-11ea-8a67-3fe16b3e885a.png)
+
+3. Fill in the same information that you used to create a bet on sport_bet_app contract on Icon Chain which are date, home_team and away_team. This information is used to specify the basketball match you wish to bet on.
+   ![img](https://user-images.githubusercontent.com/12705423/93474601-c3a79c00-f921-11ea-82dd-58421409f5b3.png)
