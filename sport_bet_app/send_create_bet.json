@@ -1,0 +1,25 @@
+{
+  "jsonrpc": "2.0",
+  "method": "icx_sendTransaction",
+  "params": {
+    "version": "0x3",
+    "from": "hx55814f724bbffe49bfa4555535cd9d7e0e1dff32",
+    "value": "0x0de0b6b3a7640000",
+    "stepLimit": "0x3000000",
+    "timestamp": "0x59aaeb314a940",
+    "nid": "0x3",
+    "nonce": "0x1",
+    "to": "cxa8a5044feac20d294093dbe9fed0f290e07f5604",
+    "dataType": "call",
+    "data": {
+      "method": "create_bet",
+      "params": {
+        "date": "2019-11-25",
+        "home_team_name": "\"Comunicaciones Mercedes\"",
+        "away_team_name": "\"San Lorenzo\"",
+        "is_home_win": 1
+      }
+    }
+  },
+  "id": 1
+}
