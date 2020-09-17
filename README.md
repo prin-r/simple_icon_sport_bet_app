@@ -114,4 +114,4 @@ relayer ----------------------------------->|  bridge  |
 Obtaining proof can be done by following the steps below.
 
 1. Go to devnet's scan at [oracle-script-85](https://guanyu-devnet.cosmoscan.io/oracle-script/85).
-   [img!](https://user-images.githubusercontent.com/12705423/93473449-3ca5f400-f920-11ea-94f9-99bb87c3efe1.png)
+   [!img](https://user-images.githubusercontent.com/12705423/93473449-3ca5f400-f920-11ea-94f9-99bb87c3efe1.png)
