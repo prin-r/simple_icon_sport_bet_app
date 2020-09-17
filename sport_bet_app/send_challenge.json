@@ -1,0 +1,22 @@
+{
+  "jsonrpc": "2.0",
+  "method": "icx_sendTransaction",
+  "params": {
+    "version": "0x3",
+    "from": "hx02e6bf5860b7d7744ec5050545d10d37c72ac2ef",
+    "value": "0x0de0b6b3a7640000",
+    "stepLimit": "0x3000000",
+    "timestamp": "0x59aaeb314a940",
+    "nid": "0x3",
+    "nonce": "0x1",
+    "to": "cxa8a5044feac20d294093dbe9fed0f290e07f5604",
+    "dataType": "call",
+    "data": {
+      "method": "challenge",
+      "params": {
+        "bet_id": 0
+      }
+    }
+  },
+  "id": 1
+}
