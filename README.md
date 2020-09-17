@@ -124,3 +124,6 @@ Obtaining proof can be done by following the steps below.
 
 3. Fill in the same information that you used to create a bet on sport_bet_app contract on Icon Chain which are date, home_team and away_team. This information is used to specify the basketball match you wish to bet on.
    ![img](https://user-images.githubusercontent.com/12705423/93474601-c3a79c00-f921-11ea-82dd-58421409f5b3.png)
+
+4. Click `Request` button and then wait util you see the proof.
+   ![img](https://user-images.githubusercontent.com/12705423/93475975-74fb0180-f923-11ea-80e8-c75bf10e7d97.png)
