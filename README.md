@@ -1,6 +1,6 @@
 # Simple ICON Sport Betting App
 
-Please keep in mind that this simple app was made to demonstrate how to use Band oracle with a smart contract on Icon testnet only, so there will be a lot of things that doesn't make any sense. An example of the unfortunate condition of this contract is that bets can be created even if the match has already taken place and ended.
+Please keep in mind that this simple app was made to demonstrate how to use Band oracle with a smart contract on Icon testnet only, so there will be a lot of things that doesn't make any sense. An example of the negligently condition of this contract is that bets can be created even if the match has already taken place and ended.
 
 ## Setup
 
