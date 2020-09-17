@@ -132,27 +132,27 @@ Obtaining proof can be done by following the steps below.
 
 6.  Use the copied proof at [send_relay_bridge.json](./sport_bet_app/send_relay_bridge.json)
 
-        ```json
-        {
-          "jsonrpc": "2.0",
-          "method": "icx_sendTransaction",
-          "params": {
-            "version": "0x3",
-            "from": "hx55814f724bbffe49bfa4555535cd9d7e0e1dff32",
-            "value": "0x0",
-            "stepLimit": "0x3000000",
-            "timestamp": "0x59aaeb314a940",
-            "nid": "0x3",
-            "nonce": "0x1",
-            "to": "cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5",
-            "dataType": "call",
-            "data": {
-              "method": "relay",
-              "params": {
-                "proof": "0000000966726f6d5f7363616e00000000000000550000003c0000000a323031392d31312d32350000001922436f6d756e69636163696f6e6573204d65726365646573220000000d2253616e204c6f72656e7a6f22000000000000000400000000000000040000000966726f6d5f7363616e000000000001c9b500000000000000040000000064d832e80000000064d8273001000000080000005700000063"
-              }
-            }
-          },
-          "id": 1
-        }
-        ```
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "icx_sendTransaction",
+  "params": {
+    "version": "0x3",
+    "from": "hx55814f724bbffe49bfa4555535cd9d7e0e1dff32",
+    "value": "0x0",
+    "stepLimit": "0x3000000",
+    "timestamp": "0x59aaeb314a940",
+    "nid": "0x3",
+    "nonce": "0x1",
+    "to": "cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5",
+    "dataType": "call",
+    "data": {
+      "method": "relay",
+      "params": {
+        "proof": "0000000966726f6d5f7363616e00000000000000550000003c0000000a323031392d31312d32350000001922436f6d756e69636163696f6e6573204d65726365646573220000000d2253616e204c6f72656e7a6f22000000000000000400000000000000040000000966726f6d5f7363616e000000000001c9b500000000000000040000000064d832e80000000064d8273001000000080000005700000063"
+      }
+    }
+  },
+  "id": 1
+}
+```
