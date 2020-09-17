@@ -132,7 +132,7 @@ Obtaining proof can be done by following the steps below.
 
 6.  Use the copied proof at [send_relay_bridge.json](./sport_bet_app/send_relay_bridge.json)
 
-        ```
+        ```json
         {
           "jsonrpc": "2.0",
           "method": "icx_sendTransaction",
