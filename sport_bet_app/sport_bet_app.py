@@ -54,9 +54,9 @@ SCORES_OBI = PyObi(
 )
 
 
-class IBridgeCache(InterfaceScore):
+class IBridge(InterfaceScore):
     @interface
-    def get_latest_response(self, encoded_request: bytes) -> dict:
+    def relay_and_verify(self, proof: bytes) -> dict:
         pass
 
 
@@ -189,14 +189,19 @@ class SportBetApp(IconScoreBase):
         return self._get_request_key_from_bet_id(bet_id)
 
     @external
-    def resolve_bet(self, bet_id: int) -> None:
+    def resolve_bet(self, bet_id: int, proof: bytes) -> None:
         bet = self._get_bet_by_id(bet_id)
         if bet["bet_status"] != BET_PENDING_RESOLVE:
             self.revert(f"bet_status should be {BET_PENDING_RESOLVE} but got {bet['bet_status']}")
 
-        bridge = self.create_interface_score(self.bridge_address.get(), IBridgeCache)
+        bridge = self.create_interface_score(self.bridge_address.get(), IBridge)
+        packet = bridge.relay_and_verify(proof)
+        req = packet["req"]
+        res = packet["res"]
 
-        res = bridge.get_latest_response(self._get_request_key_from_bet_id(bet_id))
+        if REQ_OBI.encode(req) != self._get_request_key_from_bet_id(bet_id):
+            self.revert("NOT_RELEVANT_PROOF")
+
         scores = SCORES_OBI.decode(res["result"])
 
         is_home_win = scores["home_score"] > scores["away_score"]

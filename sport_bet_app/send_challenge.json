@@ -9,7 +9,7 @@
     "timestamp": "0x59aaeb314a940",
     "nid": "0x3",
     "nonce": "0x1",
-    "to": "cxa8a5044feac20d294093dbe9fed0f290e07f5604",
+    "to": "cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220",
     "dataType": "call",
     "data": {
       "method": "challenge",

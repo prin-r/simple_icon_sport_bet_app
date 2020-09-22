@@ -9,7 +9,7 @@
     "contentType": "zip",
     "mode": "install",
     "scoreParams": {
-      "bridge_address": "cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5",
+      "bridge_address": "cx42560e639c7ed302ede731e083958d6439b1a76f",
       "client_id": "from_scan",
       "oracle_script_id": 85,
       "ask_count": 4,

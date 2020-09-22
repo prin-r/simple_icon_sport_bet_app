@@ -26,11 +26,11 @@ tbears deploy sport_bet_app -k my_key.key -c sport_bet_app/deploy_testnet.json -
 
 #### SportBetApp contract
 
-[`cxa8a5044feac20d294093dbe9fed0f290e07f5604`](https://bicon.tracker.solidwallet.io/contract/cxa8a5044feac20d294093dbe9fed0f290e07f5604#readcontract)
+[`cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220`](https://bicon.tracker.solidwallet.io/contract/cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220#readcontract)
 
 #### Bridge contract
 
-[`cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5`](https://bicon.tracker.solidwallet.io/contract/cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5#readcontract)
+[`cx42560e639c7ed302ede731e083958d6439b1a76f`](https://bicon.tracker.solidwallet.io/contract/cx42560e639c7ed302ede731e083958d6439b1a76f#readcontract)
 
 ## Interactions
 
@@ -44,12 +44,6 @@ tbears deploy sport_bet_app -k my_key.key -c sport_bet_app/deploy_testnet.json -
 
   ```
   tbears sendtx ./sport_bet_app/send_challenge.json -k challenger_key.key -u https://bicon.net.solidwallet.io/api/v3 -n 3
-  ```
-
-- relay_bridge
-
-  ```
-  tbears sendtx ./sport_bet_app/send_relay_bridge.json -k my_key.key -u https://bicon.net.solidwallet.io/api/v3 -n 3
   ```
 
 - resolve_bet
@@ -83,34 +77,16 @@ challenger ----------------------------------->|  sport_bet_app  |
                                                ===================
 ```
 
-3. resolve_bet: Resolve any bets with players on both sides (creater and challenger) by providing the betting ID as input to the `resolve_bet` function. If the reponse is found in the bridge contract, the function will be able to find a winner, where the winner will have his/her own ICX plus the loser's ICX (always 2 ICX).
-
-   - If giving bet_id does not exist (bet_id >= bet_count) tx will fail.
-   - If the status of the betting that according to the given bet_id is not equal to 1 then the tx will fail.
-   - If the reponse is not found in the bridge contract (because the it has never been relayed to the bridge contract), the tx will fail.
+3. resolve_bet: Resolve any bets with players on both sides (creater and challenger) by providing the betting ID and proof as input to the `resolve_bet` function. After the proof is sent to the `bridge` contract, the `bridge` will perform the proof verification and return the results back to the `sport_bet_app` contract.
 
 ```
-        # if you want to resolve betting 999
-          resolve_bet(999)                  ===================  get_latest_response  ============
-winner ------------------------------------>|                 | --------------------> |          |
-   ^                                        |  sport_bet_app  |                       |  bridge  |
-   |                                        |                 | <-------------------- |          |
-   ---------------------------------------- ===================    response dict      ============
-               value = 2 ICX
-```
-
-4. relay: No one can resolve a betting without proof from BandChain. Hence, someone has to take proof from the BandChain in order to relay it to the bridge contract in the Icon chain.
-
-```
-        # Any one can relay the response to the bridge contract by copy
-        # proof from the scan (https://guanyu-devnet.cosmoscan.io/oracle-script/85)
-        # and then calling relay function with the proof as a parameter.
-                                            ============
-                   relay(proof)             |          |
-relayer ----------------------------------->|  bridge  |
-                                            |          |
-                                            ============
-
+# if you want to resolve betting 999
+          resolve_bet(999, proof)      =================== relay_and_verify(proof) ============
+winner ------------------------------->|                 |------------------------>|          |
+   ^                                   |  sport_bet_app  |                         |  bridge  |
+   |                                   |                 |<------------------------|          |
+   ----------------------------------- ===================      result packet      ============
+             value = 2 ICX
 ```
 
 - Obtaining proof can be done by following the steps below.
@@ -132,7 +108,7 @@ relayer ----------------------------------->|  bridge  |
 
   5.  Click `copy-non-evm-proof` button to copy the proof
 
-  6.  Use the copied proof at [send_relay_bridge.json](./sport_bet_app/send_relay_bridge.json)
+  6.  Use the copied proof at [send_resolve_bet.json](./sport_bet_app/send_resolve_bet.json)
 
   ```json
   {
@@ -146,11 +122,12 @@ relayer ----------------------------------->|  bridge  |
       "timestamp": "0x59aaeb314a940",
       "nid": "0x3",
       "nonce": "0x1",
-      "to": "cx8c75fe79e01a2b0ee2b8fd32fe3e95628e1b6af5",
+      "to": "cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220",
       "dataType": "call",
       "data": {
-        "method": "relay",
+        "method": "resolve_bet",
         "params": {
+          "bet_id": 0,
           "proof": "0000000966726f6d5f7363616e00000000000000550000003c0000000a323031392d31312d32350000001922436f6d756e69636163696f6e6573204d65726365646573220000000d2253616e204c6f72656e7a6f22000000000000000400000000000000040000000966726f6d5f7363616e000000000001c9b500000000000000040000000064d832e80000000064d8273001000000080000005700000063"
         }
       }
