@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@bandprotocol/bandchain.js": "^1.1.4",
-    "@bandprotocol/obi.js": "^1.0.7"
+    "@bandprotocol/obi.js": "^1.0.7",
+    "icon-sdk-js": "^0.0.18"
   }
 }

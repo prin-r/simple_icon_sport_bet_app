@@ -1,11 +1,23 @@
 const BandChain = require("@bandprotocol/bandchain.js");
 const { Obi } = require("@bandprotocol/obi.js");
+const IconService = require("icon-sdk-js");
+const {
+  IconBuilder,
+  IconConverter,
+  SignedTransaction,
+  IconWallet,
+  HttpProvider,
+} = IconService;
+const { CallTransactionBuilder } = IconBuilder;
 
-const endpoint = "http://guanyu-devnet.bandchain.org/rest";
+const PRIVATE_KEY = "xxx";
+const BETTING_CONTRACT = "cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220";
+const BAND_ENDPOINT = "http://guanyu-devnet.bandchain.org/rest";
+const BET_ID = 1;
 
 const getNBAScore = async () => {
   // Instantiating BandChain with REST endpoint
-  const bandchain = new BandChain(endpoint);
+  const bandchain = new BandChain(BAND_ENDPOINT);
 
   // Create an instance of OracleScript with the script ID
   const oracleScript = await bandchain.getOracleScript(85);
@@ -27,18 +39,55 @@ const getNBAScore = async () => {
       mnemonic
     );
 
-    console.log(requestId);
+    const proof = await bandchain.getRequestNonEVMProof(requestId);
 
-    // Get final result (blocking until the reports & aggregations are finished)
-    const finalResult = await bandchain.getRequestResult(requestId);
-    let result = new Obi(oracleScript.schema).decodeOutput(
-      Buffer.from(finalResult.response_packet_data.result, "base64")
-    );
     console.log("RequestID: " + requestId);
-    console.log(result);
-  } catch {
+    let result = new Obi(oracleScript.schema).decodeOutput(
+      Buffer.from(proof.slice(-16), "hex")
+    );
+    console.log("Result:", result);
+
+    return proof;
+  } catch (e) {
+    console.log(e);
     console.error("Data request failed");
   }
 };
 
-getNBAScore();
+const sendResolveBet = async (proof) => {
+  const wallet = IconWallet.loadPrivateKey(PRIVATE_KEY);
+  const iconService = new IconService(
+    new HttpProvider("https://bicon.net.solidwallet.io/api/v3")
+  );
+
+  const txObj = new CallTransactionBuilder()
+    .from(wallet.getAddress())
+    .to(BETTING_CONTRACT)
+    .stepLimit(IconConverter.toBigNumber("2000000"))
+    .nid(IconConverter.toBigNumber("3"))
+    .nonce(IconConverter.toBigNumber("1"))
+    .version(IconConverter.toBigNumber("3"))
+    .timestamp(new Date().getTime() * 1000)
+    .method("mumumumu")
+    .params({
+      bet_id: BET_ID,
+      proof,
+    })
+    .build();
+
+  console.log(txObj);
+
+  const signedTransaction = new SignedTransaction(txObj, wallet);
+  const txHash = await iconService.sendTransaction(signedTransaction).execute();
+
+  // TODO: Fix this because still cause error
+  console.log(typeof txHash, txHash);
+  const txResult = await iconService.getTransactionResult(txHash).execute();
+
+  console.log(txResult);
+};
+
+(async () => {
+  const proof = await getNBAScore();
+  await sendResolveBet(proof);
+})();
