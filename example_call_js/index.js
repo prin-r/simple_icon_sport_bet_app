@@ -88,6 +88,9 @@ const sendResolveBet = async (proof) => {
 };
 
 (async () => {
+  // Get proof from Bandchain
   const proof = await getNBAScore();
+
+  // Send tx to icon network to resolve an open bet
   await sendResolveBet(proof);
 })();
