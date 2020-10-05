@@ -5,3 +5,5 @@ __pycache__
 *.key
 .testscore
 .teststatedb
+*node_modules
+*.lock
