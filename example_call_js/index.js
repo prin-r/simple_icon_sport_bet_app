@@ -68,7 +68,7 @@ const sendResolveBet = async (proof) => {
     .nonce(IconConverter.toBigNumber("1"))
     .version(IconConverter.toBigNumber("3"))
     .timestamp(new Date().getTime() * 1000)
-    .method("mumumumu")
+    .method("resolve_bet")
     .params({
       bet_id: BET_ID,
       proof,
@@ -78,13 +78,20 @@ const sendResolveBet = async (proof) => {
   console.log(txObj);
 
   const signedTransaction = new SignedTransaction(txObj, wallet);
-  const txHash = await iconService.sendTransaction(signedTransaction).execute();
 
-  // TODO: Fix this because still cause error
-  console.log(typeof txHash, txHash);
-  const txResult = await iconService.getTransactionResult(txHash).execute();
+  console.log(wallet.getAddress())
 
-  console.log(txResult);
+  try {
+    const txHash = await iconService.sendTransaction(signedTransaction).execute();
+
+    // TODO: Fix this because still cause error
+    console.log(typeof txHash, txHash);
+    const txResult = await iconService.getTransactionResult(txHash).execute();
+
+    console.log(txResult);
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 (async () => {
