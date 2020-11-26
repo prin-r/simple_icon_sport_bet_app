@@ -9,86 +9,116 @@ const {
   HttpProvider,
 } = IconService;
 const { CallTransactionBuilder } = IconBuilder;
+const encode = require("./obi");
 
-const PRIVATE_KEY = "xxx";
-const BETTING_CONTRACT = "cx5cc2207df262d0bc8208f0dfd6bcb8ce68f94220";
-const BAND_ENDPOINT = "http://guanyu-devnet.bandchain.org/rest";
-const BET_ID = 1;
+const ICON_PRIVATE_KEY = "xxx";
+const BRIDGE_CONTRACT = "cx4f8d1d27749739cfb02476a6ea2a20523ee4c48d";
+const BAND_ENDPOINT = "http://guanyu-testnet3-query.bandchain.org";
+const BAND_MNEMONIC =
+  "panther winner rain empower olympic attract find satoshi meadow panda job ten urge warfare piece walnut help jump usage vicious neither shallow mule laundry";
 
-const getNBAScore = async () => {
-  // Instantiating BandChain with REST endpoint
-  const bandchain = new BandChain(BAND_ENDPOINT);
+// Instantiating BandChain with endpoint
+const bandchain = new BandChain(BAND_ENDPOINT);
 
+// Instantiating IconService with endpoint
+const iconService = new IconService(
+  new HttpProvider("https://bicon.net.solidwallet.io/api/v3")
+);
+
+// Request params
+const minCount = 3;
+const askCount = 4;
+
+// Odd oracle script id
+const odd_oracle_script_id = 10;
+
+// Score oracle script id
+const score_oracle_script_id = 16;
+
+const requestOdd = async () => {
   // Create an instance of OracleScript with the script ID
-  const oracleScript = await bandchain.getOracleScript(85);
+  const oracleScript = await bandchain.getOracleScript(odd_oracle_script_id);
 
   // Create a new request, which will block until the tx is confirmed
   try {
-    const minCount = 3;
-    const askCount = 4;
-    const mnemonic =
-      "panther winner rain empower olympic attract find satoshi meadow panda job ten urge warfare piece walnut help jump usage vicious neither shallow mule laundry";
+    const mnemonic = BAND_MNEMONIC;
     const requestId = await bandchain.submitRequestTx(
       oracleScript,
       {
-        date: "2019-11-25",
-        home_team: `"Comunicaciones Mercedes"`,
-        away_team: `"San Lorenzo"`,
+        category: "football",
+        date1: "29.11.2020",
+        date2: "29.11.2020",
+        contest_id: "90988",
+        odds_type: "handicap",
+        bookmaker_id: "158",
+        multiplier: 10000,
       },
       { minCount, askCount },
       mnemonic
     );
 
-    const proof = await bandchain.getRequestNonEVMProof(requestId);
-
     console.log("RequestID: " + requestId);
-    let result = new Obi(oracleScript.schema).decodeOutput(
-      Buffer.from(proof.slice(-16), "hex")
-    );
-    console.log("Result:", result);
+    const proof = await bandchain.getRequestProof(requestId);
 
-    return proof;
+    return proof["jsonProof"];
   } catch (e) {
     console.log(e);
     console.error("Data request failed");
   }
 };
 
-const sendResolveBet = async (proof) => {
-  const wallet = IconWallet.loadPrivateKey(PRIVATE_KEY);
-  const iconService = new IconService(
-    new HttpProvider("https://bicon.net.solidwallet.io/api/v3")
-  );
+const requestScore = async () => {
+  // Create an instance of OracleScript with the script ID
+  const oracleScript = await bandchain.getOracleScript(score_oracle_script_id);
+
+  // Create a new request, which will block until the tx is confirmed
+  try {
+    const mnemonic = BAND_MNEMONIC;
+    const requestId = await bandchain.submitRequestTx(
+      oracleScript,
+      {
+        category: "football",
+        date: "11.10.2020",
+        contest_id: "90891",
+      },
+      { minCount, askCount },
+      mnemonic
+    );
+
+    console.log("RequestID: " + requestId);
+    const proof = await bandchain.getRequestProof(requestId);
+
+    return proof["jsonProof"];
+  } catch (e) {
+    console.log(e);
+    console.error("Data request failed");
+  }
+};
+
+const sendRelay = async (proof) => {
+  const wallet = IconWallet.loadPrivateKey(ICON_PRIVATE_KEY);
 
   const txObj = new CallTransactionBuilder()
     .from(wallet.getAddress())
-    .to(BETTING_CONTRACT)
-    .stepLimit(IconConverter.toBigNumber("2000000"))
+    .to(BRIDGE_CONTRACT)
+    .stepLimit(IconConverter.toBigNumber("3000000"))
     .nid(IconConverter.toBigNumber("3"))
     .nonce(IconConverter.toBigNumber("1"))
     .version(IconConverter.toBigNumber("3"))
     .timestamp(new Date().getTime() * 1000)
-    .method("resolve_bet")
-    .params({
-      bet_id: BET_ID,
-      proof,
-    })
+    .method("relay")
+    .params({ proof })
     .build();
-
-  console.log(txObj);
 
   const signedTransaction = new SignedTransaction(txObj, wallet);
 
-  console.log(wallet.getAddress())
+  console.log(wallet.getAddress());
 
   try {
-    const txHash = await iconService.sendTransaction(signedTransaction).execute();
-
-    // TODO: Fix this because still cause error
-    console.log(typeof txHash, txHash);
-    const txResult = await iconService.getTransactionResult(txHash).execute();
-
-    console.log(txResult);
+    const txHash = await iconService
+      .sendTransaction(signedTransaction)
+      .execute();
+    console.log(txHash);
   } catch (e) {
     console.log(e);
   }
@@ -96,8 +126,19 @@ const sendResolveBet = async (proof) => {
 
 (async () => {
   // Get proof from Bandchain
-  const proof = await getNBAScore();
+  const proof = await requestOdd();
+  console.log("band's block height: ", proof["blockHeight"]);
 
-  // Send tx to icon network to resolve an open bet
-  await sendResolveBet(proof);
+  const encodedProof = encode(proof, "Proof");
+  const requestKey = encode(
+    proof["oracleDataProof"]["requestPacket"],
+    "RequestPacket"
+  );
+
+  console.log("request key: ", requestKey.toString("hex"));
+
+  // Relay proof to icon chain
+  await sendRelay(encodedProof.toString("hex"));
+
+  console.log("done!");
 })();
