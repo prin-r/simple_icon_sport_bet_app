@@ -12,6 +12,7 @@
   "dependencies": {
     "@bandprotocol/bandchain.js": "^1.1.6",
     "@bandprotocol/obi.js": "^1.0.7",
+    "axios": "^0.21.0",
     "icon-sdk-js": "^0.0.18"
   }
 }

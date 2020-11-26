@@ -8,11 +8,12 @@ const {
   IconWallet,
   HttpProvider,
 } = IconService;
-const { CallTransactionBuilder } = IconBuilder;
+const { CallTransactionBuilder, CallBuilder } = IconBuilder;
 const encode = require("./obi");
 
 const ICON_PRIVATE_KEY = "xxx";
 const BRIDGE_CONTRACT = "cx4f8d1d27749739cfb02476a6ea2a20523ee4c48d";
+const ICON_ENDPOINT = "https://bicon.net.solidwallet.io/api/v3";
 const BAND_ENDPOINT = "http://guanyu-testnet3-query.bandchain.org";
 const BAND_MNEMONIC =
   "panther winner rain empower olympic attract find satoshi meadow panda job ten urge warfare piece walnut help jump usage vicious neither shallow mule laundry";
@@ -21,9 +22,7 @@ const BAND_MNEMONIC =
 const bandchain = new BandChain(BAND_ENDPOINT);
 
 // Instantiating IconService with endpoint
-const iconService = new IconService(
-  new HttpProvider("https://bicon.net.solidwallet.io/api/v3")
-);
+const iconService = new IconService(new HttpProvider(ICON_ENDPOINT));
 
 // Request params
 const minCount = 3;
@@ -60,7 +59,7 @@ const requestOdd = async () => {
     console.log("RequestID: " + requestId);
     const proof = await bandchain.getRequestProof(requestId);
 
-    return proof["jsonProof"];
+    return [proof["jsonProof"], oracleScript];
   } catch (e) {
     console.log(e);
     console.error("Data request failed");
@@ -88,7 +87,7 @@ const requestScore = async () => {
     console.log("RequestID: " + requestId);
     const proof = await bandchain.getRequestProof(requestId);
 
-    return proof["jsonProof"];
+    return [proof["jsonProof"], oracleScript];
   } catch (e) {
     console.log(e);
     console.error("Data request failed");
@@ -112,21 +111,36 @@ const sendRelay = async (proof) => {
 
   const signedTransaction = new SignedTransaction(txObj, wallet);
 
-  console.log(wallet.getAddress());
+  console.log("sender: ", wallet.getAddress());
 
   try {
     const txHash = await iconService
       .sendTransaction(signedTransaction)
       .execute();
-    console.log(txHash);
+    console.log("txHash: ", txHash);
   } catch (e) {
     console.log(e);
   }
 };
 
+const getResultInIcon = async (requestKey, schema) => {
+  const callBuilder = new CallBuilder();
+  const call = callBuilder
+    .to(BRIDGE_CONTRACT)
+    .method("get_latest_response")
+    .params({ encoded_request: requestKey.toString("hex") })
+    .build();
+
+  const res = await iconService.call(call).execute();
+  return new Obi(schema).decodeOutput(
+    Buffer.from(res["result"].slice(2), "hex")
+  );
+};
+
 (async () => {
   // Get proof from Bandchain
-  const proof = await requestOdd();
+  // const [proof, oracleScript] = await requestOdd();
+  const [proof, oracleScript] = await requestScore();
   console.log("band's block height: ", proof["blockHeight"]);
 
   const encodedProof = encode(proof, "Proof");
@@ -135,10 +149,14 @@ const sendRelay = async (proof) => {
     "RequestPacket"
   );
 
-  console.log("request key: ", requestKey.toString("hex"));
-
   // Relay proof to icon chain
+  console.log("request key: ", requestKey.toString("hex"));
   await sendRelay(encodedProof.toString("hex"));
+
+  // Check result on Icon
+  console.log("Checking result on icon");
+  const result = await getResultInIcon(requestKey, oracleScript.schema);
+  console.log(result);
 
   console.log("done!");
 })();
