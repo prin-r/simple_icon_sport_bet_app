@@ -1,4 +1,33 @@
 const { Obi } = require("@bandprotocol/obi.js");
+const crypto = require("crypto");
+
+const encodeVarintUnsigned = (value) => {
+  // Computes the size of the encoded value.
+  let tempValue = value;
+  let size = 0;
+  while (tempValue > 0) {
+    size++;
+    tempValue >>= 7;
+  }
+  // Allocates the memory buffer and fills in the encoded value.
+  let result = [];
+  tempValue = value;
+  for (let idx = 0; idx < size; idx++) {
+    result = [...result, 128 | (tempValue & 127)];
+    tempValue >>= 7;
+  }
+  result[size - 1] &= 127;
+  return result;
+};
+
+const calculateTimeHash = (second, nanoSecond) => {
+  let result = [8, ...encodeVarintUnsigned(second)];
+  if (nanoSecond > 0) {
+    result = [0, ...result, 16, ...encodeVarintUnsigned(nanoSecond)];
+  }
+  console.log(second, nanoSecond, Buffer.from(result));
+  return crypto.createHash("sha256").update(Buffer.from(result)).digest();
+};
 
 const encode = (obj, type) => {
   const bytesData = {
@@ -77,7 +106,8 @@ const encode = (obj, type) => {
       ]),
     BlockHeaderMerkleParts: ({
       versionAndChainIdHash,
-      timeHash,
+      timeSecond,
+      timeNanoSecond,
       lastBlockIDAndOther,
       nextValidatorHashAndConsensusHash,
       lastResultsHash,
@@ -85,7 +115,7 @@ const encode = (obj, type) => {
     }) =>
       Buffer.concat([
         Buffer.from(versionAndChainIdHash, "hex"),
-        Buffer.from(timeHash, "hex"),
+        calculateTimeHash(Number(timeSecond), Number(timeNanoSecond)),
         Buffer.from(lastBlockIDAndOther, "hex"),
         Buffer.from(nextValidatorHashAndConsensusHash, "hex"),
         Buffer.from(lastResultsHash, "hex"),
@@ -93,13 +123,13 @@ const encode = (obj, type) => {
       ]),
     Signatures: (sigs) => {
       return new Obi(
-        "[{r: bytes, s: bytes, v: u8, signedPrefixSuffix: bytes, signedDataSuffix: bytes}]/{_:u64}"
+        "[{r: bytes, s: bytes, v: u8, signedDataPrefix: bytes, signedDataSuffix: bytes}]/{_:u64}"
       ).encodeInput(
-        sigs.map(({ r, s, v, signedPrefixSuffix, signedDataSuffix }) => ({
+        sigs.map(({ r, s, v, signedDataPrefix, signedDataSuffix }) => ({
           r: Buffer.from(r, "hex"),
           s: Buffer.from(s, "hex"),
           v: Number(v),
-          signedPrefixSuffix: Buffer.from(signedPrefixSuffix, "hex"),
+          signedDataPrefix: Buffer.from(signedDataPrefix, "hex"),
           signedDataSuffix: Buffer.from(signedDataSuffix, "hex"),
         }))
       );

@@ -1,5 +1,13 @@
-const BandChain = require("@bandprotocol/bandchain.js");
+const {
+  Client,
+  Wallet,
+  Transaction,
+  Message,
+} = require("@bandprotocol/bandchain.js");
 const { Obi } = require("@bandprotocol/obi.js");
+const axios = require("axios");
+const { PrivateKey } = Wallet;
+const { MsgRequest } = Message;
 const IconService = require("icon-sdk-js");
 const {
   IconBuilder,
@@ -11,7 +19,8 @@ const {
 const { CallTransactionBuilder, CallBuilder } = IconBuilder;
 const encode = require("./obi");
 
-const ICON_PRIVATE_KEY = "xxx";
+const ICON_PRIVATE_KEY =
+  "2e088da80e55768d3779a16ad40e80e2d23cc27d1fa51f28ddca0a1cb3a0cf19";
 const BRIDGE_CONTRACT = "cx4f8d1d27749739cfb02476a6ea2a20523ee4c48d";
 const ICON_ENDPOINT = "https://bicon.net.solidwallet.io/api/v3";
 const BAND_ENDPOINT = "http://guanyu-testnet3-query.bandchain.org";
@@ -19,7 +28,9 @@ const BAND_MNEMONIC =
   "panther winner rain empower olympic attract find satoshi meadow panda job ten urge warfare piece walnut help jump usage vicious neither shallow mule laundry";
 
 // Instantiating BandChain with endpoint
-const bandchain = new BandChain(BAND_ENDPOINT);
+const bandchain = new Client(BAND_ENDPOINT);
+// Instantiating Band private key with mnemonic
+const bandPrivkey = PrivateKey.fromMnemonic(BAND_MNEMONIC);
 
 // Instantiating IconService with endpoint
 const iconService = new IconService(new HttpProvider(ICON_ENDPOINT));
@@ -27,72 +38,99 @@ const iconService = new IconService(new HttpProvider(ICON_ENDPOINT));
 // Request params
 const minCount = 3;
 const askCount = 4;
-
 // Odd oracle script id
-const odd_oracle_script_id = 10;
-
-// Score oracle script id
-const score_oracle_script_id = 16;
+const oddOracleScriptID = 10;
 
 const requestOdd = async () => {
-  // Create an instance of OracleScript with the script ID
-  const oracleScript = await bandchain.getOracleScript(odd_oracle_script_id);
-
   // Create a new request, which will block until the tx is confirmed
   try {
-    const mnemonic = BAND_MNEMONIC;
-    const requestId = await bandchain.submitRequestTx(
-      oracleScript,
-      {
-        category: "football",
-        date1: "29.11.2020",
-        date2: "29.11.2020",
-        contest_id: "90988",
-        odds_type: "handicap",
-        bookmaker_id: "158",
-        multiplier: 10000,
-      },
-      { minCount, askCount },
-      mnemonic
-    );
+    const requesterAddress = bandPrivkey.toPubkey().toAddress();
+    const account = await bandchain.getAccount(requesterAddress);
+    const chainID = await bandchain.getChainID();
 
-    console.log("RequestID: " + requestId);
-    const proof = await bandchain.getRequestProof(requestId);
+    const calldata = new Obi(
+      "{category:string,date1:string,date2:string,tournament_name:string,contest_id:string,odds_type:string,bookmaker_id:string}/{value:string}"
+    ).encodeInput({
+      category: "football",
+      date1: "20.01.2021",
+      date2: "30.01.2021",
+      tournament_name: "PostSeason",
+      contest_id: "91084",
+      odds_type: "handicap",
+      bookmaker_id: "20",
+    });
+    const clientID = "iconbet";
+    const tx = new Transaction()
+      .withMessages(
+        new MsgRequest(
+          oddOracleScriptID,
+          calldata,
+          askCount,
+          minCount,
+          clientID,
+          requesterAddress
+        )
+      )
+      .withAccountNum(account.accountNumber)
+      .withSequence(account.sequence)
+      .withChainID(chainID)
+      .withGas(5000000)
+      .withMemo("bandchain.js example");
 
-    return [proof["jsonProof"], oracleScript];
+    const signature = bandPrivkey.sign(tx.getSignData());
+    const rawTx = tx.getTxData(signature, bandPrivkey.toPubkey());
+
+    const txResult = await bandchain.sendTxBlockMode(rawTx);
+
+    const [requestID] = await bandchain.getRequestIDByTxHash(txResult.txHash);
+
+    console.log("RequestID: " + requestID);
+
+    const proofURL = `${BAND_ENDPOINT}/oracle/proof/${requestID}`;
+    console.log(proofURL);
+    for (let i = 0; i < 10; i++) {
+      try {
+        await new Promise((r) => setTimeout(r, 5000));
+        const proof = await axios.get(proofURL);
+        return proof["data"]["result"]["jsonProof"];
+      } catch (e) {
+        console.log("try getting proof:", i);
+      }
+    }
+    return null;
   } catch (e) {
-    console.log(e);
+    console.log(JSON.stringify(e));
     console.error("Data request failed");
   }
 };
 
-const requestScore = async () => {
-  // Create an instance of OracleScript with the script ID
-  const oracleScript = await bandchain.getOracleScript(score_oracle_script_id);
+// const requestScore = async () => {
+//   // Create an instance of OracleScript with the script ID
+//   const oracleScript = await bandchain.getOracleScript(score_oracle_script_id);
 
-  // Create a new request, which will block until the tx is confirmed
-  try {
-    const mnemonic = BAND_MNEMONIC;
-    const requestId = await bandchain.submitRequestTx(
-      oracleScript,
-      {
-        category: "football",
-        date: "11.10.2020",
-        contest_id: "90891",
-      },
-      { minCount, askCount },
-      mnemonic
-    );
+//   // Create a new request, which will block until the tx is confirmed
+//   try {
+//     const mnemonic = BAND_MNEMONIC;
+//     const requestId = await bandchain.submitRequestTx(
+//       oracleScript,
+//       {
+//         category: "football",
+//         date: "11.10.2020",
+//         contest_id: "90891",
+//       },
+//       { minCount, askCount },
+//       mnemonic
+//     );
 
-    console.log("RequestID: " + requestId);
-    const proof = await bandchain.getRequestProof(requestId);
+//     console.log("RequestID: " + requestId);
+//     const proof = await bandchain.getRequestProof(requestId);
 
-    return [proof["jsonProof"], oracleScript];
-  } catch (e) {
-    console.log(e);
-    console.error("Data request failed");
-  }
-};
+//     return [proof["jsonProof"], oracleScript];
+//   } catch (e) {
+//     console.log(e);
+//     console.error("Data request failed");
+//   }
+// };
 
 const sendRelay = async (proof) => {
   const wallet = IconWallet.loadPrivateKey(ICON_PRIVATE_KEY);
@@ -123,24 +161,23 @@ const sendRelay = async (proof) => {
   }
 };
 
-const getResultInIcon = async (requestKey, schema) => {
-  const callBuilder = new CallBuilder();
-  const call = callBuilder
-    .to(BRIDGE_CONTRACT)
-    .method("get_latest_response")
-    .params({ encoded_request: requestKey.toString("hex") })
-    .build();
+// const getResultInIcon = async (requestKey, schema) => {
+//   const callBuilder = new CallBuilder();
+//   const call = callBuilder
+//     .to(BRIDGE_CONTRACT)
+//     .method("get_latest_response")
+//     .params({ encoded_request: requestKey.toString("hex") })
+//     .build();
 
-  const res = await iconService.call(call).execute();
-  return new Obi(schema).decodeOutput(
-    Buffer.from(res["result"].slice(2), "hex")
-  );
-};
+//   const res = await iconService.call(call).execute();
+//   return new Obi(schema).decodeOutput(
+//     Buffer.from(res["result"].slice(2), "hex")
+//   );
+// };
 
 (async () => {
-  // Get proof from Bandchain
-  // const [proof, oracleScript] = await requestOdd();
-  const [proof, oracleScript] = await requestScore();
+  console.log("Start getting proof");
+  const proof = await requestOdd();
   console.log("band's block height: ", proof["blockHeight"]);
 
   const encodedProof = encode(proof, "Proof");
@@ -152,11 +189,4 @@ const getResultInIcon = async (requestKey, schema) => {
   // Relay proof to icon chain
   console.log("request key: ", requestKey.toString("hex"));
   await sendRelay(encodedProof.toString("hex"));
-
-  // Check result on Icon
-  console.log("Checking result on icon");
-  const result = await getResultInIcon(requestKey, oracleScript.schema);
-  console.log(result);
-
-  console.log("done!");
 })();

@@ -10,9 +10,10 @@
   "author": "mumu",
   "license": "ISC",
   "dependencies": {
-    "@bandprotocol/bandchain.js": "^1.1.6",
+    "@bandprotocol/bandchain.js": "^1.2.0",
     "@bandprotocol/obi.js": "^1.0.7",
     "axios": "^0.21.0",
+    "crypto": "^1.0.1",
     "icon-sdk-js": "^0.0.18"
   }
 }
