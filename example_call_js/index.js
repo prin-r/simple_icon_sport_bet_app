@@ -21,7 +21,7 @@ const encode = require("./obi");
 
 const ICON_PRIVATE_KEY =
   "2e088da80e55768d3779a16ad40e80e2d23cc27d1fa51f28ddca0a1cb3a0cf19";
-const BRIDGE_CONTRACT = "cx4f8d1d27749739cfb02476a6ea2a20523ee4c48d";
+const BRIDGE_CONTRACT = "cxb94de9090263f03c617d7e1ca767c23ca4efc6f2";
 const ICON_ENDPOINT = "https://bicon.net.solidwallet.io/api/v3";
 const BAND_ENDPOINT = "http://guanyu-testnet3-query.bandchain.org";
 const BAND_MNEMONIC =
