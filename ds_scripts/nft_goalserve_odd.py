@@ -26,6 +26,11 @@ def main(category, date1, date2, tournament_name, contest_id, odds_type, bookmak
                 return x.get("odd", [])
         return []
 
+    def find_name_main_1(l):
+        for x in l:
+            if x.get("main") == "1":
+                return x["name"]
+
     for tournament in tournaments:
         if tournament_name.lower().replace(" ", "") != tournament.get("name", None).lower().replace(
             " ", ""
@@ -54,7 +59,7 @@ def main(category, date1, date2, tournament_name, contest_id, odds_type, bookmak
                                         if len(odds) < 2:
                                             return None
                                         return "{} {} {} {} {} {} {}".format(
-                                            total[0]["name"],
+                                            find_name_main_1(total),
                                             odds[0]["name"],
                                             odds[0]["value"],
                                             odds[0]["us"],
