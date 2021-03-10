@@ -59,12 +59,33 @@ const requestOdd = async () => {
       odds_type: "handicap",
       bookmaker_id: "20",
     });
+
+    const calldata2 = new Obi(
+      "{category:string,date1:string,date2:string,tournament_name:string,contest_id:string,odds_type:string,bookmaker_id:string}/{value:string}"
+    ).encodeInput({
+      category: "football",
+      date1: "21.01.2021",
+      date2: "30.01.2021",
+      tournament_name: "PostSeason",
+      contest_id: "91084",
+      odds_type: "handicap",
+      bookmaker_id: "20",
+    });
+
     const clientID = "iconbet";
     const tx = new Transaction()
       .withMessages(
         new MsgRequest(
           oddOracleScriptID,
           calldata,
+          askCount,
+          minCount,
+          clientID,
+          requesterAddress
+        ),
+        new MsgRequest(
+          oddOracleScriptID,
+          calldata2,
           askCount,
           minCount,
           clientID,
@@ -82,22 +103,26 @@ const requestOdd = async () => {
 
     const txResult = await bandchain.sendTxBlockMode(rawTx);
 
-    const [requestID] = await bandchain.getRequestIDByTxHash(txResult.txHash);
+    const requestIDs = await bandchain.getRequestIDByTxHash(txResult.txHash);
 
-    console.log("RequestID: " + requestID);
+    console.log("RequestID: " + requestIDs);
 
-    const proofURL = `${BAND_ENDPOINT}/oracle/proof/${requestID}`;
-    console.log(proofURL);
-    for (let i = 0; i < 10; i++) {
-      try {
-        await new Promise((r) => setTimeout(r, 5000));
-        const proof = await axios.get(proofURL);
-        return proof["data"]["result"]["jsonProof"];
-      } catch (e) {
-        console.log("try getting proof:", i);
+    let proofs = [];
+    for (let requestID of requestIDs) {
+      const proofURL = `${BAND_ENDPOINT}/oracle/proof/${requestID}`;
+      console.log(proofURL);
+      for (let i = 0; i < 10; i++) {
+        try {
+          await new Promise((r) => setTimeout(r, 5000));
+          const proof = await axios.get(proofURL);
+          proofs = [...proofs, proof["data"]["result"]["jsonProof"]];
+          break;
+        } catch (e) {
+          console.log("try getting proof:", i);
+        }
       }
     }
-    return null;
+    return proofs;
   } catch (e) {
     console.log(JSON.stringify(e));
     console.error("Data request failed");
@@ -177,16 +202,20 @@ const sendRelay = async (proof) => {
 
 (async () => {
   console.log("Start getting proof");
-  const proof = await requestOdd();
-  console.log("band's block height: ", proof["blockHeight"]);
+  const proofs = await requestOdd();
 
-  const encodedProof = encode(proof, "Proof");
-  const requestKey = encode(
-    proof["oracleDataProof"]["requestPacket"],
-    "RequestPacket"
-  );
+  for (let i = 0; i < proofs.length; i++) {
+    const proof = proofs[i];
+    console.log("band's block height: ", proof["blockHeight"]);
 
-  // Relay proof to icon chain
-  console.log("request key: ", requestKey.toString("hex"));
-  await sendRelay(encodedProof.toString("hex"));
+    const encodedProof = encode(proof, "Proof");
+    const requestKey = encode(
+      proof["oracleDataProof"]["requestPacket"],
+      "RequestPacket"
+    );
+
+    // Relay proof to icon chain
+    console.log("request key: ", requestKey.toString("hex"));
+    await sendRelay(encodedProof.toString("hex"));
+  }
 })();
