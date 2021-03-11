@@ -72,6 +72,30 @@ const requestOdd = async () => {
       bookmaker_id: "20",
     });
 
+    const calldata3 = new Obi(
+      "{category:string,date1:string,date2:string,tournament_name:string,contest_id:string,odds_type:string,bookmaker_id:string}/{value:string}"
+    ).encodeInput({
+      category: "football",
+      date1: "19.01.2021",
+      date2: "30.01.2021",
+      tournament_name: "PostSeason",
+      contest_id: "91084",
+      odds_type: "handicap",
+      bookmaker_id: "20",
+    });
+
+    const calldata4 = new Obi(
+      "{category:string,date1:string,date2:string,tournament_name:string,contest_id:string,odds_type:string,bookmaker_id:string}/{value:string}"
+    ).encodeInput({
+      category: "football",
+      date1: "22.01.2021",
+      date2: "30.01.2021",
+      tournament_name: "PostSeason",
+      contest_id: "91084",
+      odds_type: "handicap",
+      bookmaker_id: "20",
+    });
+
     const clientID = "iconbet";
     const tx = new Transaction()
       .withMessages(
@@ -86,6 +110,22 @@ const requestOdd = async () => {
         new MsgRequest(
           oddOracleScriptID,
           calldata2,
+          askCount,
+          minCount,
+          clientID,
+          requesterAddress
+        ),
+        new MsgRequest(
+          oddOracleScriptID,
+          calldata3,
+          askCount,
+          minCount,
+          clientID,
+          requesterAddress
+        ),
+        new MsgRequest(
+          oddOracleScriptID,
+          calldata4,
           askCount,
           minCount,
           clientID,
